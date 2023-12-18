@@ -5,7 +5,6 @@ import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -41,8 +40,12 @@ public class MainVerticle extends AbstractVerticle {
                 .setType("file")
                 .setFormat("json")
                 .setConfig(new JsonObject().put("path", "conf/config.json"));
+        ConfigStoreOptions cliConfig = new ConfigStoreOptions()
+                .setType("json")
+                .setConfig(config());
         ConfigRetrieverOptions options = new ConfigRetrieverOptions()
-                .addStore(defaultConfig);
+                .addStore(defaultConfig)
+                .addStore(cliConfig);
         ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
         // Handler<AsyncResult<JsonObject>> handler = ar -> handleConfigResults(startPromise, router, ar);
         retriever.getConfig(/*handler*/ar -> handleConfigResults(startPromise, router, ar));
