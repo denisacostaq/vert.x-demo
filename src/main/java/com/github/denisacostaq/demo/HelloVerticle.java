@@ -2,7 +2,11 @@ package com.github.denisacostaq.demo;
 
 import io.vertx.core.AbstractVerticle;
 
+import java.util.UUID;
+
 public class HelloVerticle extends AbstractVerticle {
+
+    String verticleId = UUID.randomUUID().toString();
 
         @Override
         public void start() {
@@ -12,7 +16,7 @@ public class HelloVerticle extends AbstractVerticle {
 
             vertx.eventBus().consumer("hello.name.addr", message -> {
                 String name = (String) message.body();
-                message.reply(String.format("Hello %s!", name));
+                message.reply(String.format("Hello %s from %s!", name, verticleId));
             });
         }
 }
