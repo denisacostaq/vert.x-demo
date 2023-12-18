@@ -4,6 +4,8 @@ import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -24,18 +26,21 @@ public class MainVerticle extends AbstractVerticle {
         ConfigRetrieverOptions options = new ConfigRetrieverOptions()
             .addStore(defaultConfig);
         ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
-        retriever.getConfig(ar -> {
-            if (ar.failed()) {
-                System.out.println("Failed to retrieve the configuration.");
-                startPromise.fail(ar.cause());
-            } else {
-                JsonObject config = ar.result();
-                System.out.println("Retrieved configuration: " + config.encodePrettily());
-                int httpPort = config.getInteger("http.port", 8080);
-                vertx.createHttpServer().requestHandler(router).listen(httpPort);
-                startPromise.complete();
-            }
-        });
+        // Handler<AsyncResult<JsonObject>> handler = ar -> handleConfigResults(startPromise, router, ar);
+        retriever.getConfig(/*handler*/ar -> handleConfigResults(startPromise, router, ar));
+    }
+
+    void handleConfigResults(Promise<Void> startPromise, Router router, AsyncResult<JsonObject> ar) {
+        if (ar.failed()) {
+            System.out.println("Failed to retrieve the configuration.");
+            startPromise.fail(ar.cause());
+        } else {
+            JsonObject config = ar.result();
+            System.out.println("Retrieved configuration: " + config.encodePrettily());
+            int httpPort = config.getInteger("http.port", 8080);
+            vertx.createHttpServer().requestHandler(router).listen(httpPort);
+            startPromise.complete();
+        }
     }
 
     void helloVertx(RoutingContext ctx) {
