@@ -1,27 +1,41 @@
 package com.github.denisacostaq.demo;
 
+import io.vertx.config.ConfigRetriever;
+import io.vertx.config.ConfigRetrieverOptions;
+import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class MainVerticle extends AbstractVerticle {
 
     @Override
-    public void start() {
+    public void start(Promise<Void> startPromise) {
         vertx.deployVerticle(new HelloVerticle());
         Router router = Router.router(vertx);
         router.get("/api/v1/hello").handler(this::helloVertx);
         router.get("/api/v1/hello/:name").handler(this::helloName);
-        int httpPort = 8080;
-        try {
-            httpPort = Integer.parseInt(System.getProperty("http.port", "8080"));
-        } catch (NumberFormatException ex) {
-            System.err.println("Invalid format for HTTP_PORT: " + System.getProperty("http.port"));
-        } catch (Exception ex) {
-            System.err.println("HTTP_PORT not set");
-        }
-        System.out.println("HTTP_PORT: " + httpPort);
-        vertx.createHttpServer().requestHandler(router).listen(httpPort);
+        ConfigStoreOptions defaultConfig = new ConfigStoreOptions()
+            .setType("file")
+            .setFormat("json")
+            .setConfig(new JsonObject().put("path", "conf/config.json"));
+        ConfigRetrieverOptions options = new ConfigRetrieverOptions()
+            .addStore(defaultConfig);
+        ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
+        retriever.getConfig(ar -> {
+            if (ar.failed()) {
+                System.out.println("Failed to retrieve the configuration.");
+                startPromise.fail(ar.cause());
+            } else {
+                JsonObject config = ar.result();
+                System.out.println("Retrieved configuration: " + config.encodePrettily());
+                int httpPort = config.getInteger("http.port", 8080);
+                vertx.createHttpServer().requestHandler(router).listen(httpPort);
+                startPromise.complete();
+            }
+        });
     }
 
     void helloVertx(RoutingContext ctx) {
