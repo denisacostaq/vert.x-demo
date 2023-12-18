@@ -10,6 +10,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.StaticHandler;
 
 public class MainVerticle extends AbstractVerticle {
 
@@ -28,6 +29,10 @@ public class MainVerticle extends AbstractVerticle {
         });
         router.get("/api/v1/hello").handler(this::helloVertx);
         router.get("/api/v1/hello/:name").handler(this::helloName);
+        router.route().handler(StaticHandler.create("web").setIndexPage("index.html"));
+        router.route().handler(ctx -> {
+            ctx.response().setStatusCode(404).setStatusMessage("not found").end();
+        });
         doConfig(startPromise, router);
     }
 
