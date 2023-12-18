@@ -28,12 +28,16 @@ public class MainVerticle extends AbstractVerticle {
         });
         router.get("/api/v1/hello").handler(this::helloVertx);
         router.get("/api/v1/hello/:name").handler(this::helloName);
+        doConfig(startPromise, router);
+    }
+
+    void doConfig(Promise<Void> startPromise, Router router) {
         ConfigStoreOptions defaultConfig = new ConfigStoreOptions()
-            .setType("file")
-            .setFormat("json")
-            .setConfig(new JsonObject().put("path", "conf/config.json"));
+                .setType("file")
+                .setFormat("json")
+                .setConfig(new JsonObject().put("path", "conf/config.json"));
         ConfigRetrieverOptions options = new ConfigRetrieverOptions()
-            .addStore(defaultConfig);
+                .addStore(defaultConfig);
         ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
         // Handler<AsyncResult<JsonObject>> handler = ar -> handleConfigResults(startPromise, router, ar);
         retriever.getConfig(/*handler*/ar -> handleConfigResults(startPromise, router, ar));
